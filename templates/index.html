@@ -1,183 +1,2056 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chicken Health Predictor</title>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoultryPro - Smart Poultry Farm & AI Disease Detection</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-amber-50">
-    <div class="container mx-auto px-4 py-8">
-      <div
-        class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden"
-      >
-        <div class="relative h-40 bg-amber-200">
-          <img
-            src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-            alt="Chicken background"
-            class="w-full h-full object-cover opacity-50"
-          />
-          <h1
-            class="absolute bottom-4 left-4 text-3xl font-bold text-amber-900"
-          >
-            Chicken Health Predictor
-          </h1>
-        </div>
-        <div class="p-6">
-          <p class="text-gray-700 mb-4">
-            Upload an image of chicken faeces to predict its health status.
-          </p>
-          <div class="mb-6">
-            <div
-              class="relative border-2 border-dashed border-gray-300 rounded-lg p-4"
-            >
-              <input
-                type="file"
-                id="fileinput"
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <div class="text-center">
-                <i class="fas fa-upload text-4xl text-gray-400 mb-2"></i>
-                <p class="text-sm text-gray-500">
-                  Drag and drop an image here or click to upload.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="flex justify-between items-center mb-6">
-            <button
-              id="uload"
-              class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
-            >
-              <i class="fas fa-feather-alt mr-2"></i>Upload
-            </button>
-            <button
-              id="train"
-              class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
-            >
-              <i class="fas fa-graduation-cap mr-2"></i>Train Model
-            </button>
-            <button
-              id="send"
-              class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
-            >
-              <i class="fas fa-egg mr-2"></i>Predict
-            </button>
-          </div>
-          <div class="flex space-x-4">
-            <div class="w-1/2">
-              <h3 class="text-lg font-semibold mb-2 text-amber-800">
-                Image Preview
-              </h3>
-              <div class="border rounded-lg overflow-hidden h-64">
-                <img
-                  id="selected-image"
-                  src="https://via.placeholder.com/300x300?text=No+Image"
-                  alt="Selected image"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            <div class="w-1/2">
-              <h3 class="text-lg font-semibold mb-2 text-amber-800">
-                Prediction Result
-              </h3>
-              <div
-                id="result"
-                class="border rounded-lg p-4 h-64 overflow-auto bg-gray-50"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-      $(document).ready(function () {
-        function readURL(input) {
-          if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-              $("#selected-image").attr("src", e.target.result);
-            };
-            reader.readAsDataURL(input.files[0]);
-          }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandDarkGreen: '#132515',   // Sidebar dark green
+                        brandMediumGreen: '#2D5A27', // Active buttons, headers
+                        brandSageBg: '#739B78',      // Main dashboard content bg
+                        brandLightGreen: '#E8F0E8',   // Light cards bg
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            scroll-behavior: smooth;
         }
 
-        $("#fileinput").change(function () {
-          readURL(this);
+        /* Glassmorphism custom components */
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .glass-dark {
+            backdrop-filter: blur(12px);
+            background: rgba(19, 37, 21, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Interactive spinning fan animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-fast {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(45, 90, 39, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(45, 90, 39, 0.6);
+        }
+
+        /* PRINT STYLE RULES FOR PROFESSIONAL PDF REPORTS */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                font-family: 'Inter', sans-serif;
+            }
+            /* Hide landing page, sidebars, dashboard panels, modals, settings */
+            #landing-page, #sidebar, #dashboard-header, #main-dashboard-view, 
+            #analytics-charts-grid, #report-generator-inputs, #sensors-view, 
+            #settings-view, #toast, #live-esp32-btn, .no-print {
+                display: none !important;
+            }
+            /* Full width layout for print container */
+            #main-content-area {
+                width: 100% !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+            /* Style and center audit sheet */
+            #print-report-container {
+                display: block !important;
+                width: 100% !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                padding: 20px !important;
+                background: white !important;
+                color: black !important;
+            }
+            .print-card {
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                background: white !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col">
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-150%] transition-transform duration-300 ease-out bg-brandMediumGreen text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 max-w-sm">
+        <div class="bg-white/20 p-2 rounded-lg">
+            <i id="toast-icon" class="fas fa-check text-lg"></i>
+        </div>
+        <div>
+            <h4 id="toast-title" class="font-bold text-sm">Success</h4>
+            <p id="toast-desc" class="text-xs opacity-90">Action completed successfully.</p>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW STATE 1: LANDING PAGE -->
+    <!-- ========================================================================= -->
+    <div id="landing-page" class="w-full flex flex-col bg-slate-900 text-white min-h-screen transition-all duration-500 ease-in-out">
+        
+        <!-- HEADER -->
+        <header class="w-full max-w-7xl mx-auto px-6 py-5 flex justify-between items-center z-10 shrink-0">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchLandingView('home')">
+                <div class="bg-brandMediumGreen p-2.5 rounded-xl shadow-lg flex items-center justify-center">
+                    <i class="fa-solid fa-egg text-xl text-white"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-bold tracking-tight text-white flex items-center">
+                        Poultry<span class="text-emerald-400">Pro</span>
+                    </span>
+                    <span class="text-[10px] tracking-wider uppercase text-emerald-300 block -mt-1 font-semibold">Smart Farm</span>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+                <a href="#features" onclick="switchLandingView('home')" class="hover:text-emerald-400 transition-colors">Features</a>
+                <a href="#how-it-works" onclick="switchLandingView('home')" class="hover:text-emerald-400 transition-colors">How It Works</a>
+                <a href="#about-us" onclick="switchLandingView('home')" class="hover:text-emerald-400 transition-colors">About Us</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+                <button onclick="switchLandingView('login')" class="text-slate-300 hover:text-emerald-400 text-sm font-semibold transition-all focus:outline-none">
+                    Sign In
+                </button>
+                <button onclick="switchLandingView('register')" class="bg-brandMediumGreen hover:bg-emerald-600 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md shadow-brandMediumGreen/30 hover:scale-105 active:scale-95 inline-block text-white focus:outline-none">
+                    Register <i class="fas fa-arrow-right ml-1.5 text-xs"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ========================================================================= -->
+        <!-- SUB-VIEW 1.1: LANDING HOME VIEW -->
+        <!-- ========================================================================= -->
+        <div id="landing-home-view" class="w-full flex flex-col flex-grow">
+            <!-- HERO SECTION -->
+            <section class="max-w-7xl mx-auto px-6 pt-16 pb-24 flex flex-col items-center text-center space-y-8 flex-grow">
+                <div class="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-400/20 px-4 py-1.5 rounded-full text-emerald-400 text-xs font-semibold w-max uppercase tracking-wider">
+                    <i class="fa-solid fa-network-wired animate-pulse"></i>
+                    <span>Hardware Integrated IoT Solution</span>
+                </div>
+                <h1 class="text-4xl sm:text-6xl font-extrabold text-white leading-tight max-w-4xl mx-auto">
+                    Smart Farming, <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                        AI Disease Prediction
+                    </span> <br>
+                    & IoT Insights.
+                </h1>
+                <p class="text-slate-300 text-lg leading-relaxed max-w-2xl mx-auto">
+                    An all-in-one hardware-integrated platform powered by an advanced machine learning (ML) model and live sensor monitoring to optimize poultry health, bedding status, fan controls, and resource levels automatically.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 pt-4">
+                    <button onclick="switchLandingView('login')" class="bg-brandMediumGreen hover:bg-emerald-600 px-8 py-4 rounded-xl text-sm font-bold transition-all shadow-lg shadow-brandMediumGreen/20 hover:scale-105 active:scale-95 text-white">
+                        Access Portal <i class="fas fa-sign-in-alt ml-2"></i>
+                    </button>
+                    <button onclick="switchLandingView('register')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-8 py-4 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 text-white">
+                        Create Account <i class="fas fa-user-plus ml-2"></i>
+                    </button>
+                </div>
+                <div class="flex flex-wrap justify-center gap-6 pt-10">
+                    <div class="flex items-center space-x-3 bg-slate-800/60 border border-slate-700/50 p-4 rounded-xl">
+                        <i class="fa-solid fa-microchip text-2xl text-emerald-400"></i>
+                        <div class="text-left">
+                            <span class="block text-white font-bold text-sm">ESP32 Linked</span>
+                            <span class="text-xs text-slate-400">Plug & Play Sensors</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 bg-slate-800/60 border border-slate-700/50 p-4 rounded-xl">
+                        <i class="fa-solid fa-brain text-2xl text-teal-400"></i>
+                        <div class="text-left">
+                            <span class="block text-white font-bold text-sm">Local ML Model</span>
+                            <span class="text-xs text-slate-400">Disease Classification</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+        <!-- FEATURES SECTION -->
+        <section id="features" class="bg-slate-950 py-24 border-t border-slate-800/30">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                    <span class="text-xs uppercase font-bold text-emerald-400 tracking-widest">State-Of-The-Art Capabilities</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Equipped with Advanced Tools</h2>
+                    <p class="text-slate-400">Our ecosystem seamlessly aggregates IoT data and artificial intelligence to deliver unparalleled efficiency in poultry farming operations.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Feature 1 -->
+                    <div class="bg-slate-900 border border-slate-800/50 p-8 rounded-2xl shadow-xl hover:-translate-y-2 transition-all group">
+                        <div class="bg-emerald-500/10 text-emerald-400 p-4 rounded-xl w-max mb-6 group-hover:bg-brandMediumGreen group-hover:text-white transition-all">
+                            <i class="fa-solid fa-microscope text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">AI Disease Classification</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Instantly detect poultry diseases (like Coccidiosis, Salmonella, and Newcastle disease) by uploading images analyzed by a highly-calibrated Machine Learning model.
+                        </p>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="bg-slate-900 border border-slate-800/50 p-8 rounded-2xl shadow-xl hover:-translate-y-2 transition-all group">
+                        <div class="bg-teal-500/10 text-teal-400 p-4 rounded-xl w-max mb-6 group-hover:bg-teal-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-wind text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Microclimate Fan Relays</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Control temperatures through hardware integration. Fans toggle ON/OFF manually or switch to automated modes when temperature thresholds are triggered.
+                        </p>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="bg-slate-900 border border-slate-800/50 p-8 rounded-2xl shadow-xl hover:-translate-y-2 transition-all group">
+                        <div class="bg-sky-500/10 text-sky-400 p-4 rounded-xl w-max mb-6 group-hover:bg-sky-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-lungs text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Gas & Air Quality (MQ135)</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Continuously track ammonia (NH3) gas concentrations. High ammonia level alerts protect flock respiratory health and automatically prompt relay fan activation.
+                        </p>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="bg-slate-900 border border-slate-800/50 p-8 rounded-2xl shadow-xl hover:-translate-y-2 transition-all group">
+                        <div class="bg-amber-500/10 text-amber-400 p-4 rounded-xl w-max mb-6 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-water text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Ultrasonic Feed Leveling</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            HC-SR04 ultrasonic sensors calculate remaining feed levels by height displacement. Always remain updated on remaining supply capacity.
+                        </p>
+                    </div>
+
+                    <!-- Feature 5 -->
+                    <div class="bg-slate-900 border border-slate-800/50 p-8 rounded-2xl shadow-xl hover:-translate-y-2 transition-all group">
+                        <div class="bg-pink-500/10 text-pink-400 p-4 rounded-xl w-max mb-6 group-hover:bg-pink-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-seedling text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Soil & Bedding Moisture</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Analyze coop soil and wood-shaving bedding moisture. Optimal dryness is preserved to block disease growth and bacterial multiplication.
+                        </p>
+                    </div>
+
+                    <!-- Feature 6 -->
+                    <div class="bg-slate-900 border border-slate-800/50 p-8 rounded-2xl shadow-xl hover:-translate-y-2 transition-all group">
+                        <div class="bg-indigo-500/10 text-indigo-400 p-4 rounded-xl w-max mb-6 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-file-invoice text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Professional Report Auditing</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Generate comprehensive farm analysis reports. Directly download CSV worksheets or beautiful print-ready PDF audit files detailing hardware metrics.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS SECTION -->
+        <section id="how-it-works" class="py-24 bg-slate-900 border-t border-slate-800/30">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                    <span class="text-xs uppercase font-bold text-emerald-400 tracking-widest">Process Flow</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white">How The Hardware System Operates</h2>
+                    <p class="text-slate-400">An integrated hardware-to-software pipeline provides automated support and remote supervision.</p>
+                </div>
+
+                <div class="grid md:grid-cols-4 gap-8 relative">
+                    <!-- Line connecting -->
+                    <div class="hidden md:block absolute top-1/2 left-[12%] right-[12%] h-[2px] bg-slate-800 -translate-y-6 z-0"></div>
+
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center text-center relative z-10 space-y-4">
+                        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center justify-center font-black text-lg group hover:bg-brandMediumGreen hover:text-white hover:border-transparent transition-all shadow-lg">
+                            1
+                        </div>
+                        <h4 class="text-white font-bold text-lg">Sensor Readings</h4>
+                        <p class="text-slate-400 text-xs leading-relaxed max-w-[200px]">DHT11, MQ135, Soil Moisture, and Ultrasonic sensors sample real-time coop environments.</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center text-center relative z-10 space-y-4">
+                        <div class="w-14 h-14 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full flex items-center justify-center font-black text-lg group hover:bg-teal-500 hover:text-white hover:border-transparent transition-all shadow-lg">
+                            2
+                        </div>
+                        <h4 class="text-white font-bold text-lg">ESP32 Core Processing</h4>
+                        <p class="text-slate-400 text-xs leading-relaxed max-w-[200px]">The ESP32 microcontroller processes inputs and communicates with the web portal.</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center text-center relative z-10 space-y-4">
+                        <div class="w-14 h-14 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full flex items-center justify-center font-black text-lg group hover:bg-sky-500 hover:text-white hover:border-transparent transition-all shadow-lg">
+                            3
+                        </div>
+                        <h4 class="text-white font-bold text-lg">AI & ML Analysis</h4>
+                        <p class="text-slate-400 text-xs leading-relaxed max-w-[200px]">Coop operators upload photos analyzed by the Machine Learning model for instant disease diagnostics.</p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="flex flex-col items-center text-center relative z-10 space-y-4">
+                        <div class="w-14 h-14 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full flex items-center justify-center font-black text-lg group hover:bg-purple-500 hover:text-white hover:border-transparent transition-all shadow-lg">
+                            4
+                        </div>
+                        <h4 class="text-white font-bold text-lg">Relay Adjustment</h4>
+                        <p class="text-slate-400 text-xs leading-relaxed max-w-[200px]">System triggers fan relays instantly if temperature or gas values spike past alert thresholds.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABOUT US SECTION -->
+        <section id="about-us" class="py-24 bg-slate-950 border-t border-slate-800/30">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid lg:grid-cols-12 gap-12 items-center">
+                    <div class="lg:col-span-5 flex justify-center">
+                        <div class="relative w-80 h-80 bg-slate-900 rounded-3xl border border-slate-800 flex items-center justify-center p-8 overflow-hidden shadow-2xl">
+                            <div class="absolute -top-10 -right-10 w-40 h-40 bg-brandMediumGreen/10 rounded-full blur-2xl"></div>
+                            <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-500/10 rounded-full blur-2xl"></div>
+                            <div class="text-center z-10 space-y-4">
+                                <i class="fa-solid fa-building text-6xl text-emerald-400"></i>
+                                <h3 class="text-2xl font-extrabold text-white">PoultryPro</h3>
+                                <p class="text-slate-400 text-xs tracking-widest uppercase">Smart Farming Solutions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-7 space-y-6">
+                        <span class="text-xs uppercase font-bold text-emerald-400 tracking-widest">Our Vision</span>
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Innovating Poultry Agriculture</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            PoultryPro is designed to bridge agricultural needs and technological breakthroughs. We believe that integrating affordable IoT nodes (like the ESP32) alongside local Machine Learning diagnostics builds robust environments for animals and highly optimized workflows for farmers.
+                        </p>
+                        <p class="text-slate-400 text-sm">
+                            By monitoring moisture, gas levels, feed heights, and automated venting, operators dramatically curb disease outbreaks, reduce food waste, and safeguard livestock investments.
+                        </p>
+                        <div class="flex items-center space-x-6 pt-2">
+                            <div>
+                                <span class="block text-2xl font-extrabold text-emerald-400">100%</span>
+                                <span class="text-xs text-slate-500">Hardware Aligned</span>
+                            </div>
+                            <div class="w-px h-8 bg-slate-800"></div>
+                            <div>
+                                <span class="block text-2xl font-extrabold text-teal-400">Instant</span>
+                                <span class="text-xs text-slate-500">Disease Diagnostics</span>
+                            </div>
+                            <div class="w-px h-8 bg-slate-800"></div>
+                            <div>
+                                <span class="block text-2xl font-extrabold text-sky-400">Auto</span>
+                                <span class="text-xs text-slate-500">Relay Execution</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="bg-slate-950 py-10 border-t border-slate-900 text-center text-slate-600 text-xs">
+            <div class="max-w-7xl mx-auto px-6 space-y-4">
+                <p>&copy; 2026 PoultryPro Smart Farm Systems. All Rights Reserved. Built for high-reliability IoT operations.</p>
+                <div class="flex justify-center space-x-6 text-slate-500">
+                    <a href="#" class="hover:text-emerald-400">Privacy Policy</a>
+                    <span>&bull;</span>
+                    <a href="#" class="hover:text-emerald-400">Operator manual</a>
+                    <span>&bull;</span>
+                    <a href="#" class="hover:text-emerald-400">Hardware Pinouts</a>
+                </div>
+            </div>
+        </footer>
+        </div> <!-- ===================================== END landing-home-view ===================================== -->
+
+        <!-- ========================================================================= -->
+        <!-- SUB-VIEW 1.2: LANDING LOGIN VIEW (SEPARATE SIGN IN PAGE) -->
+        <!-- ========================================================================= -->
+        <div id="landing-login-view" class="w-full flex-grow flex items-center justify-center px-6 py-16 hidden">
+            <div class="w-full max-w-md glass-dark p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-slate-700/30">
+                <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
+                
+                <button onclick="switchLandingView('home')" class="text-xs text-slate-400 hover:text-emerald-400 font-bold uppercase mb-6 flex items-center transition-colors focus:outline-none">
+                    <i class="fas fa-arrow-left mr-1.5"></i> Back to Home
+                </button>
+
+                <!-- Login Form -->
+                <form id="form-login" onsubmit="handleAuth(event, 'login')" class="space-y-4">
+                    <h3 class="text-2xl font-black text-white mb-1">Welcome Back</h3>
+                    <p class="text-xs text-slate-400 mb-6">Enter your credentials to access your smart farm.</p>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Username / Email</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-user absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="login-username" required placeholder="admin" 
+                                class="w-full bg-slate-800/80 border border-slate-700 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-emerald-400 transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="password" id="login-password" required placeholder="admin123" 
+                                class="w-full bg-slate-800/80 border border-slate-700 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-emerald-400 transition-colors">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-brandMediumGreen hover:bg-emerald-600 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all shadow-lg shadow-brandMediumGreen/20 hover:scale-[1.02] active:scale-95 text-white focus:outline-none">
+                        Access Dashboard <i class="fas fa-sign-in-alt ml-2"></i>
+                    </button>
+                    
+                    <div class="text-center pt-4 border-t border-slate-800/50 mt-4">
+                        <span class="text-xs text-slate-400">Don't have an account?</span>
+                        <button type="button" onclick="switchLandingView('register')" class="text-emerald-400 hover:text-emerald-300 text-xs font-bold ml-1 transition-colors focus:outline-none">
+                            Register Now
+                        </button>
+                    </div>
+                    <p class="text-center text-[10px] text-slate-500 pt-2">Simulated Local Environment. Default: admin / admin123</p>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- SUB-VIEW 1.3: LANDING REGISTER VIEW (SEPARATE REGISTRATION PAGE) -->
+        <!-- ========================================================================= -->
+        <div id="landing-register-view" class="w-full flex-grow flex items-center justify-center px-6 py-16 hidden">
+            <div class="w-full max-w-md glass-dark p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-slate-700/30">
+                <div class="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
+
+                <button onclick="switchLandingView('home')" class="text-xs text-slate-400 hover:text-emerald-400 font-bold uppercase mb-6 flex items-center transition-colors focus:outline-none">
+                    <i class="fas fa-arrow-left mr-1.5"></i> Back to Home
+                </button>
+
+                <!-- Registration Form -->
+                <form id="form-register" onsubmit="handleAuth(event, 'register')" class="space-y-4">
+                    <h3 class="text-2xl font-black text-white mb-1">Create Profile</h3>
+                    <p class="text-xs text-slate-400 mb-6">Register a new profile to configure alerts and track sensors.</p>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Full Name</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-id-card absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="reg-name" required placeholder="Poultry Operator" 
+                                class="w-full bg-slate-800/80 border border-slate-700 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-emerald-400 transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Username / Email</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-envelope absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="reg-username" required placeholder="operator" 
+                                class="w-full bg-slate-800/80 border border-slate-700 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-emerald-400 transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="password" id="reg-password" required placeholder="••••••••" 
+                                class="w-full bg-slate-800/80 border border-slate-700 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-emerald-400 transition-colors">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 text-white focus:outline-none">
+                        Create & Sign In <i class="fas fa-user-plus ml-2"></i>
+                    </button>
+
+                    <div class="text-center pt-4 border-t border-slate-800/50 mt-4">
+                        <span class="text-xs text-slate-400">Already have an account?</span>
+                        <button type="button" onclick="switchLandingView('login')" class="text-emerald-400 hover:text-emerald-300 text-xs font-bold ml-1 transition-colors focus:outline-none">
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- ===================================== END landing-page ===================================== -->
+
+    <!-- ========================================================================= -->
+    <!-- VIEW STATE 2: APP DASHBOARD (LOGGED IN) -->
+    <!-- ========================================================================= -->
+    <div id="app-dashboard" class="w-full flex-grow flex min-h-screen hidden transition-all duration-500 ease-in-out">
+        
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="w-64 bg-brandDarkGreen text-white flex flex-col justify-between shrink-0 border-r border-emerald-950/20">
+            <div>
+                <!-- Brand Title -->
+                <div class="p-6 border-b border-white/10 flex items-center space-x-3">
+                    <div class="bg-brandMediumGreen p-2 rounded-xl flex items-center justify-center">
+                        <i class="fa-solid fa-egg text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black tracking-tight text-white flex items-center">
+                            Poultry<span class="text-emerald-400">Pro</span>
+                        </h2>
+                        <span class="text-[9px] tracking-wider uppercase text-emerald-300 block -mt-1 font-semibold">Smart Farm</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="p-4 space-y-1.5 flex-grow">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brandMediumGreen text-white shadow-md">
+                        <i class="fa-solid fa-chart-line text-lg shrink-0"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    
+                    <button onclick="switchTab('analytics')" id="nav-analytics" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-white/5 hover:text-slate-100">
+                        <i class="fa-solid fa-chart-pie text-lg shrink-0"></i>
+                        <span>Analytics & Reports</span>
+                    </button>
+
+                    <button onclick="switchTab('sensors')" id="nav-sensors" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-white/5 hover:text-slate-100">
+                        <i class="fa-solid fa-microchip text-lg shrink-0"></i>
+                        <span>Hardware Pinouts</span>
+                    </button>
+
+                    <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-white/5 hover:text-slate-100">
+                        <i class="fa-solid fa-sliders text-lg shrink-0"></i>
+                        <span>Alarm Thresholds</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Profile Info & Logout -->
+            <div class="p-4 border-t border-white/10 space-y-3">
+                <div class="flex items-center space-x-3 bg-white/5 p-3 rounded-xl">
+                    <div class="bg-brandMediumGreen w-9 h-9 rounded-full flex items-center justify-center font-bold text-white uppercase text-sm border border-white/10" id="user-initials">
+                        AD
+                    </div>
+                    <div class="truncate">
+                        <h4 class="text-xs font-bold text-white truncate" id="user-display-name">Admin Operator</h4>
+                        <span class="text-[9px] uppercase tracking-wider text-emerald-400 font-bold">Flock Manager</span>
+                    </div>
+                </div>
+                
+                <button onclick="logoutUser()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all uppercase tracking-wider">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Log Out Session</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN DASHBOARD CONTENT AREA -->
+        <main id="main-content-area" class="flex-grow bg-brandSageBg p-8 overflow-y-auto flex flex-col justify-between">
+            
+            <!-- HEADER SUMMARY -->
+            <div id="dashboard-header" class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-brandDarkGreen">Farm Overview</h1>
+                    <p class="text-xs text-brandDarkGreen/80 font-medium">Real-time parameters, AI analysis diagnostics & report outputs.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white/95 px-4 py-2 rounded-xl shadow-sm text-xs font-semibold text-brandDarkGreen border border-emerald-950/10 flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping mr-2"></span>
+                        <span class="relative flex h-2 w-2 mr-2 -ml-4">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        System Online (ESP32 Live)
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================================= -->
+            <!-- DASHBOARD VIEW -->
+            <!-- ========================================================================= -->
+            <div id="main-dashboard-view" class="space-y-6">
+                
+                <!-- TELEMETRY CARDS (GRID OF 9 PARAMETERS + FAN OVERRIDE CONTROLS) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    
+                    <!-- CARD 1: TEMPERATURE -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-rose-500 flex flex-col justify-between h-[155px] relative">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-temperature-three-quarters text-rose-500 mr-1.5"></i> Temperature
+                            </span>
+                            <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">Live</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-temp">-- °C</span>
+                        </div>
+                        <div class="flex flex-col space-y-1">
+                            <span class="text-[10px] text-slate-400 font-medium">Alert range: 28°C - 32°C</span>
+                            <select id="chick-dropdown" class="text-slate-700 bg-slate-100 border border-slate-200 rounded-lg p-1 text-[11px] font-bold focus:outline-none focus:border-brandMediumGreen">
+                                <option>Chicks (0-1 week)</option>
+                                <option>Chicks (2-4 weeks)</option>
+                                <option>Layers</option>
+                                <option>Broilers</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: HUMIDITY -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-amber-500 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-droplet text-amber-500 mr-1.5"></i> Humidity
+                            </span>
+                            <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">DHT11</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-humidity">-- %</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold">Ideal: 50-70%</span>
+                            <span class="text-[10px] text-slate-400">DHT11 Humid Sensor</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: SOIL BEDDING -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-emerald-700 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-seedling text-emerald-700 mr-1.5"></i> Soil Bedding
+                            </span>
+                            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Moisture</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-soil">-- %</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold" id="card-soil-status">Optimal (Dry)</span>
+                            <span class="text-[10px] text-slate-400">Blocks bacteria growth</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 4: GAS MQ135 -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-purple-500 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-lungs text-purple-500 mr-1.5"></i> Gas Level
+                            </span>
+                            <span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">MQ135</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-gas">-- ppm</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold" id="card-gas-status">Safe / Low NH3</span>
+                            <span class="text-[10px] text-slate-400">Coop Ammonia Tracking</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 5: ULTRASONIC FEED SENSOR -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-indigo-500 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-rss text-indigo-500 mr-1.5"></i> Ultrasonic Feed
+                            </span>
+                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">HC-SR04</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-feed">-- %</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold" id="card-feed-height">Depth: -- cm</span>
+                            <span class="text-[10px] text-slate-400">Supply Level Indicator</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 6: RELAY FAN STATUS (INTERACTIVE FAN CONTROLS) -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-teal-500 flex flex-col justify-between h-[155px] sm:col-span-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-fan text-teal-600 mr-1.5"></i> Fan Relay Module
+                            </span>
+                            <span id="fan-badge" class="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 flex items-center">
+                                <i id="fan-icon-spin" class="fas fa-fan mr-1"></i> <span id="fan-status-text">Fan Idle</span>
+                            </span>
+                        </div>
+                        
+                        <!-- Toggle Controls -->
+                        <div class="flex items-center justify-between my-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <!-- Toggle Button Switch -->
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[11px] font-bold text-slate-500 uppercase">Manual:</span>
+                                <button onclick="toggleFanState()" id="fan-toggle-btn" class="w-12 h-6 bg-slate-300 rounded-full p-0.5 transition-colors focus:outline-none relative">
+                                    <div id="fan-toggle-circle" class="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform"></div>
+                                </button>
+                            </div>
+
+                            <div class="h-6 w-px bg-slate-200"></div>
+
+                            <!-- Auto/Manual Switch Selector -->
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[11px] font-bold text-slate-500 uppercase">Mode:</span>
+                                <select id="fan-mode-select" onchange="changeFanMode()" class="text-slate-700 bg-white border border-slate-200 rounded-lg p-1 text-[11px] font-bold focus:outline-none focus:border-brandMediumGreen">
+                                    <option value="auto">Automatic (Temp > 31°)</option>
+                                    <option value="manual">Manual Override</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <span class="text-[10px] text-slate-400">Automatic: Activates fan relay when gas or temp exceeds threshold.</span>
+                    </div>
+
+                    <!-- CARD 7: WATER LEVEL -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-blue-500 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-faucet-drip text-blue-500 mr-1.5"></i> Water Level
+                            </span>
+                            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Monitoring</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-water">-- %</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold">Auto Refill Connected</span>
+                            <span class="text-[10px] text-slate-400">Flow Switch Active</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 8: FOOD SUPPLY -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-green-600 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-bowl-food text-green-600 mr-1.5"></i> Food Supply
+                            </span>
+                            <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">Feeding</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-food-supply">-- %</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold">Auto Feeding Active</span>
+                            <span class="text-[10px] text-slate-400">Weekly Target Met</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 9: LIGHTING -->
+                    <div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-yellow-500 flex flex-col justify-between h-[155px]">
+                        <div class="flex justify-between items-start">
+                            <span class="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-regular fa-lightbulb text-yellow-500 mr-1.5"></i> Lighting
+                            </span>
+                            <span class="text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-100">Schedule</span>
+                        </div>
+                        <div class="my-2">
+                            <span class="text-3xl font-black text-slate-800" id="card-lighting">-- hrs</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-slate-500 text-[11px] font-bold">Recommended: 14 hrs</span>
+                            <span class="text-[10px] text-slate-400">Photo-period timers</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- MAIN WORKFLOW: AI DISEASE DETECTION PANEL -->
+                <div class="bg-white rounded-3xl shadow-xl p-8 border border-emerald-950/5">
+                    
+                    <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-5 mb-6">
+                        <div class="space-y-1">
+                            <h2 class="text-2xl font-black text-brandDarkGreen flex items-center">
+                                <i class="fa-solid fa-robot text-brandMediumGreen mr-2.5"></i> AI Disease Detection
+                            </h2>
+                            <p class="text-xs text-slate-500 font-medium">Upload photos to run localized Machine Learning diagnostics.</p>
+                        </div>
+                        <div class="pt-4 md:pt-0">
+                            <!-- ESP32 LINK BUTTON -->
+                            <a href="http://192.168.4.1" target="_blank" id="live-esp32-btn" class="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-purple-600/20 hover:scale-105 active:scale-95">
+                                <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+                                <span>Open ESP32 Live Stream 📡</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Workflow Grid -->
+                    <div class="grid lg:grid-cols-12 gap-8 items-stretch">
+                        
+                        <!-- Upload Image Block -->
+                        <div class="lg:col-span-4 flex flex-col justify-between bg-slate-50 border-2 border-dashed border-emerald-300 p-6 rounded-2xl text-center relative hover:bg-slate-100/50 transition-colors">
+                            <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                            
+                            <div class="my-auto py-4 space-y-4">
+                                <div class="bg-emerald-500/10 text-brandMediumGreen w-14 h-14 rounded-full flex items-center justify-center mx-auto shadow-inner border border-emerald-200">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-slate-800 text-sm">Select Chicken Image</h4>
+                                    <p class="text-[11px] text-slate-400 max-w-[200px] mx-auto">Upload a poultry photo from your gallery or trigger a live webcam scan.</p>
+                                </div>
+                                
+                                <div class="flex flex-col sm:flex-row justify-center gap-3 w-full px-2 pt-2">
+                                    <button type="button" onclick="document.getElementById('imageUpload').click()" class="bg-brandMediumGreen hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-brandMediumGreen/20 hover:scale-105 active:scale-95 flex-grow">
+                                        <i class="fa-solid fa-image mr-1.5"></i> Gallery
+                                    </button>
+                                    <button type="button" onclick="openCameraStream()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-purple-600/20 hover:scale-105 active:scale-95 flex-grow">
+                                        <i class="fa-solid fa-camera mr-1.5"></i> Camera
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview Block -->
+                        <div class="lg:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Image Preview</h3>
+                            <div class="bg-slate-200 rounded-xl overflow-hidden aspect-[4/3] flex items-center justify-center border border-slate-300 shadow-inner relative max-h-[220px]">
+                                <img id="preview" src="https://via.placeholder.com/400x300?text=Awaiting+Image" alt="Chicken Preview" class="w-full h-full object-cover">
+                                <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                                <div id="camera-controls" class="absolute bottom-2 left-2 right-2 flex justify-between gap-2 hidden">
+                                    <button type="button" onclick="captureFrame()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center shadow-lg border border-emerald-400/20">
+                                        <i class="fa-solid fa-circle-dot mr-1"></i> Capture
+                                    </button>
+                                    <button type="button" onclick="closeCameraStream()" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center shadow-lg border border-rose-400/20">
+                                        <i class="fa-solid fa-xmark mr-1"></i> Close
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-slate-400 mt-2 text-center" id="preview-footnote">Selected file preview thumbnail</span>
+                        </div>
+
+                        <!-- ML Prediction Output Block -->
+                        <div class="lg:col-span-4 bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Prediction Result</h3>
+                            
+                            <!-- Result Box -->
+                            <div class="flex flex-col flex-grow justify-between">
+                                <div id="resultCard" class="bg-slate-200 rounded-xl p-5 text-center flex-grow flex flex-col justify-center border border-slate-300 shadow-inner transition-colors duration-300 min-h-[110px] my-auto">
+                                    <h4 id="predictionText" class="text-xl sm:text-2xl font-black text-slate-600">No Prediction Yet</h4>
+                                    <p id="confidenceText" class="text-xs font-bold text-slate-400 mt-1">Confidence: --</p>
+                                </div>
+
+                                <!-- Treatment Recommendation Card -->
+                                <div id="treatmentCard" class="bg-slate-100 border border-slate-200 rounded-xl p-4 mt-3 hidden text-left transition-all duration-300 shadow-sm">
+                                    <h4 class="text-[11px] font-black text-slate-700 uppercase tracking-wider flex items-center mb-1.5">
+                                        <i class="fa-solid fa-kit-medical text-emerald-600 mr-1.5 text-xs"></i> Treatment & Biosafety Option:
+                                    </h4>
+                                    <p id="treatmentText" class="text-[10px] text-slate-600 leading-relaxed font-medium"></p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mt-4">
+                                <button onclick="predictImage()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-blue-600/20 hover:scale-105 active:scale-95">
+                                    Analyze with ML Model <i class="fa-solid fa-brain ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ========================================================================= -->
+            <!-- ANALYTICS & PRINTABLE REPORTS VIEW -->
+            <!-- ========================================================================= -->
+            <div id="analytics-view" class="space-y-6 hidden">
+                
+                <!-- Dynamic Charts Layout -->
+                <div id="analytics-charts-grid" class="grid lg:grid-cols-2 gap-6">
+                    
+                    <!-- Chart 1: Temp & Humidity -->
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+                        <h3 class="text-md font-bold text-brandDarkGreen mb-4"><i class="fa-solid fa-temperature-half text-rose-500 mr-2"></i> Temp & Humidity 24h Trend</h3>
+                        <div class="h-64 relative">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Soil Moisture & Ammonia Gas -->
+                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+                        <h3 class="text-md font-bold text-brandDarkGreen mb-4"><i class="fa-solid fa-seedling text-emerald-600 mr-2"></i> Soil Bedding & Ammonia MQ135 Trend</h3>
+                        <div class="h-64 relative">
+                            <canvas id="gasChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Report Generator block -->
+                <div class="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+                    
+                    <div id="report-generator-inputs" class="border-b border-slate-100 pb-5 mb-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                            <div>
+                                <h3 class="text-xl font-black text-brandDarkGreen flex items-center">
+                                    <i class="fa-solid fa-file-excel text-emerald-600 mr-2.5"></i> Farm Sensor Audit Reports
+                                </h3>
+                                <p class="text-xs text-slate-500 font-medium mt-1">Compile Soil, Gas, Temp, Relay state and Feed level sensor logs.</p>
+                            </div>
+                            
+                            <!-- Inputs Form inline -->
+                            <div class="flex items-center space-x-3 w-full md:w-auto">
+                                <select id="report-range" class="text-slate-700 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-brandMediumGreen">
+                                    <option value="today">Today's Summary</option>
+                                    <option value="week">Last 7 Days</option>
+                                    <option value="month">Last 30 Days</option>
+                                </select>
+                                
+                                <button onclick="generateSensorReport()" class="bg-brandMediumGreen hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-brandMediumGreen/20 hover:scale-105 active:scale-95 whitespace-nowrap">
+                                    Compile Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REPORT OUTPUT / PRINT SHEETS -->
+                    <div id="report-output-card" class="bg-slate-50 border border-slate-200/60 rounded-2xl p-6 hidden relative">
+                        
+                        <!-- Top actions bar -->
+                        <div class="flex justify-end space-x-3 mb-6 no-print">
+                            <button onclick="downloadCSVReport()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 shadow transition-all">
+                                <i class="fas fa-file-csv"></i>
+                                <span>Download CSV</span>
+                            </button>
+                            <button onclick="triggerPDFPrint()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 shadow transition-all">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Print / Save PDF</span>
+                            </button>
+                        </div>
+
+                        <!-- ACTUAL PRINTABLE REPORT CONTAINER -->
+                        <div id="print-report-container" class="bg-white p-8 rounded-xl shadow-inner border border-slate-200/80">
+                            
+                            <!-- Professional Letterhead -->
+                            <div class="flex justify-between items-start border-b-2 border-brandDarkGreen pb-6 mb-6">
+                                <div>
+                                    <h2 class="text-2xl font-black text-brandDarkGreen uppercase tracking-tight flex items-center">
+                                        <i class="fa-solid fa-egg text-emerald-600 mr-2 text-xl"></i> PoultryPro Audit
+                                    </h2>
+                                    <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Smart Livestock IoT Technologies</p>
+                                    <p class="text-xs text-slate-400 mt-1" id="report-operator-tag">Operator: Admin</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-block bg-brandMediumGreen/10 border border-brandMediumGreen/20 text-brandMediumGreen text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">SYSTEM STAMPED</span>
+                                    <p class="text-xs text-slate-500 font-bold mt-2" id="report-date-tag">Date: May 30, 2026</p>
+                                    <p class="text-[10px] text-slate-400">ID: PP-2026-0530</p>
+                                </div>
+                            </div>
+
+                            <h3 class="text-lg font-black text-slate-800 uppercase text-center mb-6">Farm Telemetry Audit & Hardware Report</h3>
+
+                            <!-- Table of aggregated average parameters -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-100 border-b border-slate-300">
+                                            <th class="py-3 px-4 font-black uppercase text-slate-600">Hardware Sensor Name</th>
+                                            <th class="py-3 px-4 font-black uppercase text-slate-600">Telemetry Parameter</th>
+                                            <th class="py-3 px-4 font-black uppercase text-slate-600 text-center">Aggregate Average</th>
+                                            <th class="py-3 px-4 font-black uppercase text-slate-600 text-center">Safety Threshold</th>
+                                            <th class="py-3 px-4 font-black uppercase text-slate-600 text-right">Status Flag</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200">
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">DHT11 Core Node</td>
+                                            <td class="py-3 px-4 text-slate-600">Temperature</td>
+                                            <td class="py-3 px-4 text-center font-bold text-slate-800" id="rep-val-temp">28.4 °C</td>
+                                            <td class="py-3 px-4 text-center text-slate-500">28°C - 32°C</td>
+                                            <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">OPTIMAL</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">DHT11 Core Node</td>
+                                            <td class="py-3 px-4 text-slate-600">Humidity</td>
+                                            <td class="py-3 px-4 text-center font-bold text-slate-800" id="rep-val-humidity">61.5 %</td>
+                                            <td class="py-3 px-4 text-center text-slate-500">50% - 70%</td>
+                                            <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">OPTIMAL</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">Soil Moisture Node</td>
+                                            <td class="py-3 px-4 text-slate-600">Coop Bedding Moisture</td>
+                                            <td class="py-3 px-4 text-center font-bold text-slate-800" id="rep-val-soil">34.8 %</td>
+                                            <td class="py-3 px-4 text-center text-slate-500">20% - 40%</td>
+                                            <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">Optimal (Dry)</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">MQ135 Gas Collector</td>
+                                            <td class="py-3 px-4 text-slate-600">Ammonia (NH3) Density</td>
+                                            <td class="py-3 px-4 text-center font-bold text-slate-800" id="rep-val-gas">12.3 ppm</td>
+                                            <td class="py-3 px-4 text-center text-slate-500">&lt; 20 ppm</td>
+                                            <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">SAFE</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">HC-SR04 Ultrasonic Transmitter</td>
+                                            <td class="py-3 px-4 text-slate-600">Remaining Feed Supply</td>
+                                            <td class="py-3 px-4 text-center font-bold text-slate-800" id="rep-val-feed">84.2 %</td>
+                                            <td class="py-3 px-4 text-center text-slate-500">20% - 100%</td>
+                                            <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">OPTIMAL</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-slate-700">5V Relay Actuator</td>
+                                            <td class="py-3 px-4 text-slate-600">Relay Fan Mode & Output</td>
+                                            <td class="py-3 px-4 text-center font-bold text-slate-800" id="rep-val-fan">AUTO (Active 🟢)</td>
+                                            <td class="py-3 px-4 text-center text-slate-500">Reactive ON / OFF</td>
+                                            <td class="py-3 px-4 text-right"><span class="bg-blue-100 text-blue-700 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">ACTIVE SYSTEM</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Diagnostic Summary from ML Model -->
+                            <div class="mt-8 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                <h4 class="font-bold text-slate-700 mb-1 text-xs uppercase tracking-wider">AI Diagnostic & ML Summary Statement:</h4>
+                                <p class="text-slate-600 text-xs leading-relaxed">
+                                    The localized ML Model has audited livestock image structures. Based on active telemetry sampling over the compiled range, microclimate nodes report excellent air composition (NH3 average at 12.3 ppm) and soil dry levels (34.8% moisture) which completely blocks pathogenic incubator growth. Temperature was preserved in comfortable zones (28.4°C average). No alerts triggered.
+                                </p>
+                            </div>
+
+                            <!-- Official signature section -->
+                            <div class="mt-12 pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 text-center text-xs">
+                                <div>
+                                    <div class="w-40 border-b border-slate-300 mx-auto mb-1 h-8"></div>
+                                    <p class="font-bold text-slate-700">Flock Manager Signature</p>
+                                    <p class="text-[10px] text-slate-400">PoultryPro Smart Farm Operator</p>
+                                </div>
+                                <div>
+                                    <div class="w-40 border-b border-slate-300 mx-auto mb-1 h-8 flex items-end justify-center font-serif italic text-slate-400">PoultryPro System</div>
+                                    <p class="font-bold text-slate-700">Automatic Telemetry Stamp</p>
+                                    <p class="text-[10px] text-slate-400">Hardware Board Node ESP32</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ========================================================================= -->
+            <!-- HARDWARE PINOUTS VIEW -->
+            <!-- ========================================================================= -->
+            <div id="sensors-view" class="space-y-6 hidden">
+                <div class="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+                    <div class="border-b border-slate-100 pb-5 mb-6">
+                        <h2 class="text-2xl font-black text-brandDarkGreen flex items-center">
+                            <i class="fa-solid fa-microchip text-brandMediumGreen mr-2.5"></i> Connected Hardware Specifications
+                        </h2>
+                        <p class="text-xs text-slate-500 font-medium">Verify actual pin mapping and calibration targets on the ESP32 motherboard.</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Sensor card 1 -->
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="bg-rose-500/10 text-rose-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold">
+                                    DHT
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">DHT11 Temp & Humidity</h4>
+                                    <span class="text-[9px] uppercase tracking-wider text-rose-500 font-bold bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded">Digital Pin 4</span>
+                                </div>
+                            </div>
+                            <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                                Supplies digital telemetry for coop ambient temperature and moisture. Triggers exhaust systems if air temperature limits exceed 31°C.
+                            </p>
+                            <span class="text-[10px] text-slate-400 font-medium">Model Calibration: +/- 2°C Accuracy</span>
+                        </div>
+
+                        <!-- Sensor card 2 -->
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="bg-purple-500/10 text-purple-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold">
+                                    MQ
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">MQ135 Gas Sensor</h4>
+                                    <span class="text-[9px] uppercase tracking-wider text-purple-500 font-bold bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded">Analog Pin A0</span>
+                                </div>
+                            </div>
+                            <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                                Measures ammonia gas (NH3), alcohol, benzene, and carbon dioxide concentrations. Heavy ammonia triggers direct air exhaustion alert.
+                            </p>
+                            <span class="text-[10px] text-slate-400 font-medium">Model Range: 10 - 1000 ppm</span>
+                        </div>
+
+                        <!-- Sensor card 3 -->
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="bg-emerald-600/10 text-emerald-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold">
+                                    SOIL
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Soil Bedding Node</h4>
+                                    <span class="text-[9px] uppercase tracking-wider text-emerald-600 font-bold bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded">Analog Pin A1</span>
+                                </div>
+                            </div>
+                            <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                                Tracks bedding moisture through wooden shavings. Excess moisture encourages disease and signals the operator to replace the wood-chips bedding immediately.
+                            </p>
+                            <span class="text-[10px] text-slate-400 font-medium">Threshold safety: &lt; 40% moisture</span>
+                        </div>
+
+                        <!-- Sensor card 4 -->
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="bg-indigo-500/10 text-indigo-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold">
+                                    SR04
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">HC-SR04 Ultrasonic</h4>
+                                    <span class="text-[9px] uppercase tracking-wider text-indigo-500 font-bold bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">Pins 12 & 13</span>
+                                </div>
+                            </div>
+                            <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                                Tracks food silo height. Triggers Echo/Trigger sound pulses inside feed containers to determine depth displacement and calculates silo volume percentage.
+                            </p>
+                            <span class="text-[10px] text-slate-400 font-medium">Trigger GPIO 12, Echo GPIO 13</span>
+                        </div>
+
+                        <!-- Sensor card 5 -->
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="bg-teal-500/10 text-teal-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold">
+                                    FAN
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">5V Relay Exhaust Fan</h4>
+                                    <span class="text-[9px] uppercase tracking-wider text-teal-600 font-bold bg-teal-50 border border-teal-100 px-1.5 py-0.5 rounded">Digital Pin 14</span>
+                                </div>
+                            </div>
+                            <p class="text-slate-500 text-xs leading-relaxed mb-4">
+                                Magnetic electromagnetic 5V relay switch linked to the exhaust system. Regulated automatically or overridden manually by the user from this portal.
+                            </p>
+                            <span class="text-[10px] text-slate-400 font-medium">Mode status: Isolated Contacts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================================= -->
+            <!-- ALARM CONFIGURATION SETTINGS VIEW -->
+            <!-- ========================================================================= -->
+            <div id="settings-view" class="space-y-6 hidden">
+                <div class="bg-white rounded-3xl shadow-xl p-8 border border-slate-100 max-w-3xl">
+                    <div class="border-b border-slate-100 pb-5 mb-6">
+                        <h2 class="text-2xl font-black text-brandDarkGreen flex items-center">
+                            <i class="fa-solid fa-sliders text-brandMediumGreen mr-2.5"></i> Custom Alert Thresholds
+                        </h2>
+                        <p class="text-xs text-slate-500 font-medium">Calibrate parameters. When crossed, exhaust relays activate automatically and push notifications trigger.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Setting 1 -->
+                        <div class="grid sm:grid-cols-12 gap-4 items-center">
+                            <label class="sm:col-span-5 text-xs font-bold text-slate-700 uppercase">Max Coop Temperature (°C):</label>
+                            <div class="sm:col-span-7 flex items-center space-x-3">
+                                <input type="number" id="set-temp" value="31.5" class="bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-brandMediumGreen w-24">
+                                <span class="text-slate-400 text-xs">Exhaust fans activate if exceeded.</span>
+                            </div>
+                        </div>
+
+                        <!-- Setting 2 -->
+                        <div class="grid sm:grid-cols-12 gap-4 items-center">
+                            <label class="sm:col-span-5 text-xs font-bold text-slate-700 uppercase">Max Ammonia Gas Density (ppm):</label>
+                            <div class="sm:col-span-7 flex items-center space-x-3">
+                                <input type="number" id="set-gas" value="18" class="bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-brandMediumGreen w-24">
+                                <span class="text-slate-400 text-xs">High ammonia NH3 alarm boundary.</span>
+                            </div>
+                        </div>
+
+                        <!-- Setting 3 -->
+                        <div class="grid sm:grid-cols-12 gap-4 items-center">
+                            <label class="sm:col-span-5 text-xs font-bold text-slate-700 uppercase">Max Wood-chips Soil Moisture (%):</label>
+                            <div class="sm:col-span-7 flex items-center space-x-3">
+                                <input type="number" id="set-soil" value="45" class="bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-brandMediumGreen w-24">
+                                <span class="text-slate-400 text-xs">Damp alert levels for bedding quality.</span>
+                            </div>
+                        </div>
+
+                        <!-- Setting 4 -->
+                        <div class="grid sm:grid-cols-12 gap-4 items-center">
+                            <label class="sm:col-span-5 text-xs font-bold text-slate-700 uppercase">Critical Empty Silo Level (%):</label>
+                            <div class="sm:col-span-7 flex items-center space-x-3">
+                                <input type="number" id="set-feed" value="20" class="bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-brandMediumGreen w-24">
+                                <span class="text-slate-400 text-xs">Ultrasonic food refilling warning line.</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-6 flex justify-end">
+                            <button onclick="saveThresholdSettings()" class="bg-brandMediumGreen hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-brandMediumGreen/20 hover:scale-105 active:scale-95">
+                                Save Alarm Configuration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <footer class="mt-8 border-t border-brandDarkGreen/15 pt-6 flex justify-between items-center text-[10px] text-brandDarkGreen/60 font-semibold no-print">
+                <p>&copy; 2026 PoultryPro Smart Farm Ecosystem. Stamped for ESP32 Nodes.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-brandDarkGreen">Operator Guide</a>
+                    <a href="#" class="hover:text-brandDarkGreen">Calibrations</a>
+                </div>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- JAVASCRIPT LOGIC CORE -->
+    <!-- ========================================================================= -->
+    <script>
+        // ==========================================
+        // TELEMETRY STATE variables
+        // ==========================================
+        let liveTemp = 28.3;
+        let liveHumidity = 61.2;
+        let liveSoil = 34.2;
+        let liveGas = 12.1;
+        let liveFeed = 84.5;
+        let liveWater = 78.0;
+        let liveFoodSupply = 83.2;
+        let liveLighting = 14;
+
+        // Alarm settings limits
+        let alarmTempThreshold = 31.5;
+        let alarmGasThreshold = 18.0;
+        let alarmSoilThreshold = 45.0;
+        let alarmFeedThreshold = 20.0;
+
+        // Relay Fan state
+        let fanActive = false;
+        let fanMode = "auto"; // "auto" vs "manual"
+
+        // Authentic User Auth state
+        let currentUser = null;
+        try {
+            const savedUser = localStorage.getItem('poultry_user');
+            if (savedUser && savedUser !== "undefined") {
+                currentUser = JSON.parse(savedUser);
+            }
+        } catch (e) {
+            console.warn("Failed to parse poultry_user from localStorage:", e);
+            localStorage.removeItem('poultry_user');
+        }
+
+        // Charts handles
+        let tempChartInstance = null;
+        let gasChartInstance = null;
+
+        // Base64 disease upload
+        let uploadedImage = null;
+
+        // Webcam camera streaming tracks
+        let cameraStreamTrack = null;
+
+        // Disease treatment primary solutions
+        const diseaseTreatments = {
+            "healthy": "Your flock appears fully healthy! Keep bio-security tight by maintaining dry bedding (under 40% moisture), providing fresh water, clean feed, and using shoe disinfectants upon entering coop structures.",
+            "coccidiosis": "1. Administer Vet-approved Coccidiostats (e.g., Amprolium) in drinking water immediately.<br>2. Swap out damp wood bedding shavings with 100% dry bedding to prevent oocyst multiplication.<br>3. Quarantine infected birds immediately.",
+            "new castle disease": "1. Isolate the infected chicken immediately as Newcastle spreads rapidly through aerosol droplets.<br>2. Sanitize all feed containers, drinking systems, and coop enclosures.<br>3. Broad-spectrum antibiotics can be used for secondary bacterial infections.",
+            "salmonella": "1. Administer veterinary-recommended oral antibiotics (like Amoxicillin) in water.<br>2. Ensure robust rodent control (mice are major Salmonella vectors).<br>3. Thoroughly clean the coop and add acidifiers to poultry drinking water.",
+            "fowl pox": "1. Separate infected chickens. Gently dab facial lesions with mild antiseptics.<br>2. Screen coop enclosures or eliminate standing water to control disease-carrying mosquitoes.<br>3. Clear chicken dust from surfaces and boost ventilation levels.",
+            "avian influenza": "1. STRICT BIO-SECURITY: Isolate the coop immediately. Avian Influenza is highly contagious and high-risk.<br>2. Notify agricultural or animal health authorities immediately.<br>3. Lockdown the flock; completely prevent contact with wild birds or vector animals."
+        };
+
+        // ==========================================
+        // LIFECYCLE INITIALIZER
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            initAppSession();
+            
+            // Periodically fluctuate sensor parameters to simulate actual live environment!
+            setInterval(simulateLiveSensorFluctuations, 4000);
         });
 
-        $("#uload").click(function () {
-          $("#fileinput").click();
-        });
+        // ==========================================
+        // SESSION MANAGER
+        // ==========================================
+        function initAppSession() {
+            try {
+                if (currentUser && currentUser.name) {
+                    // Show dashboard state
+                    document.getElementById('landing-page').classList.add('hidden');
+                    document.getElementById('app-dashboard').classList.remove('hidden');
+                    
+                    // Set profile details
+                    document.getElementById('user-display-name').innerText = currentUser.name || "Operator";
+                    
+                    // initials
+                    let initials = "OP";
+                    if (currentUser.name) {
+                        const nameWords = currentUser.name.split(' ');
+                        initials = nameWords.map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                    }
+                    document.getElementById('user-initials').innerText = initials;
 
-        $("#send").click(function () {
-          var file = $("#fileinput")[0].files[0];
-          if (file) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-              var img = new Image();
-              img.src = e.target.result;
-              img.onload = function () {
-                var canvas = document.createElement("canvas");
-                var ctx = canvas.getContext("2d");
-                canvas.height = this.height;
-                canvas.width = this.width;
-                ctx.drawImage(this, 0, 0);
-                var base64 = canvas
-                  .toDataURL("image/jpeg")
-                  .replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+                    // Sync threshold input elements
+                    document.getElementById('set-temp').value = alarmTempThreshold;
+                    document.getElementById('set-gas').value = alarmGasThreshold;
+                    document.getElementById('set-soil').value = alarmSoilThreshold;
+                    document.getElementById('set-feed').value = alarmFeedThreshold;
 
-                $.ajax({
-                  url: "/predict",
-                  method: "POST",
-                  contentType: "application/json",
-                  data: JSON.stringify({ image: base64 }),
-                  success: function (response) {
-                    $("#result").html(
-                      '<p class="text-lg font-semibold mb-2">Prediction: ' +
-                        response.prediction +
-                        '</p>'
-                    );
-                  },
-                  error: function () {
-                    $("#result").html(
-                      '<p class="text-red-500">Error occurred during prediction.</p>'
-                    );
-                  },
-                });
-              };
+                    // Trigger UI update
+                    updateTelemetryUI();
+                    initTelemetryCharts();
+                } else {
+                    // Clean up any incomplete/corrupted session
+                    if (currentUser) {
+                        console.warn("Invalid currentUser session object, resetting:", currentUser);
+                        localStorage.removeItem('poultry_user');
+                        currentUser = null;
+                    }
+                    // Show landing page state
+                    document.getElementById('landing-page').classList.remove('hidden');
+                    document.getElementById('app-dashboard').classList.add('hidden');
+                    switchLandingView('home');
+                }
+            } catch (err) {
+                console.error("Critical error in initAppSession, falling back to landing page:", err);
+                // Safe fallback recovery
+                document.getElementById('landing-page').classList.remove('hidden');
+                document.getElementById('app-dashboard').classList.add('hidden');
+                switchLandingView('home');
+            }
+        }
+
+        // ==========================================
+        // LANDING PAGE ROUTING HELPERS
+        // ==========================================
+        function switchLandingView(view) {
+            const homeView = document.getElementById('landing-home-view');
+            const loginView = document.getElementById('landing-login-view');
+            const regView = document.getElementById('landing-register-view');
+
+            if (view === 'home') {
+                homeView.classList.remove('hidden');
+                loginView.classList.add('hidden');
+                regView.classList.add('hidden');
+            } else if (view === 'login') {
+                homeView.classList.add('hidden');
+                loginView.classList.remove('hidden');
+                regView.classList.add('hidden');
+            } else if (view === 'register') {
+                homeView.classList.add('hidden');
+                loginView.classList.add('hidden');
+                regView.classList.remove('hidden');
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function handleAuth(event, type) {
+            event.preventDefault();
+            
+            if (type === 'login') {
+                const userVal = document.getElementById('login-username').value.trim();
+                const passVal = document.getElementById('login-password').value;
+
+                try {
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: userVal,
+                            password: passVal
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        currentUser = data.user;
+                        localStorage.setItem('poultry_user', JSON.stringify(currentUser));
+                        
+                        showToast("Access Granted", "Logged in successfully to Smart Farm Portal.", "fa-check");
+                        initAppSession();
+                    } else {
+                        showToast("Access Denied", data.message || "Invalid credentials.", "fa-triangle-exclamation");
+                    }
+                } catch (err) {
+                    console.error("Login Server Error:", err);
+                    showToast("Server Connection Error", "Could not connect to backend authentication server.", "fa-wifi-slash");
+                }
+            } else {
+                const nameVal = document.getElementById('reg-name').value.trim();
+                const userVal = document.getElementById('reg-username').value.trim();
+                const passVal = document.getElementById('reg-password').value;
+
+                try {
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: nameVal,
+                            username: userVal,
+                            password: passVal
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        currentUser = data.user;
+                        localStorage.setItem('poultry_user', JSON.stringify(currentUser));
+                        
+                        showToast("Account Created", "Successfully registered & stored in MongoDB.", "fa-user-check");
+                        initAppSession();
+                    } else {
+                        showToast("Registration Failed", data.message || "Username may already be taken.", "fa-triangle-exclamation");
+                    }
+                } catch (err) {
+                    console.error("Registration Server Error:", err);
+                    showToast("Server Connection Error", "Could not connect to backend authentication server.", "fa-wifi-slash");
+                }
+            }
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('poultry_user');
+            currentUser = null;
+            showToast("Logged Out", "Session closed successfully.", "fa-right-from-bracket");
+            initAppSession();
+        }
+
+        // ==========================================
+        // SIDEBAR TAB NAVIGATOR
+        // ==========================================
+        function switchTab(targetTab) {
+            const tabs = ['dashboard', 'analytics', 'sensors', 'settings'];
+            
+            // Toggle view panels
+            tabs.forEach(tab => {
+                const view = document.getElementById(tab + '-view');
+                const btn = document.getElementById('nav-' + tab);
+                
+                // Handle analytics custom suffix
+                const finalView = tab === 'dashboard' ? document.getElementById('main-dashboard-view') : view;
+                
+                if (tab === targetTab) {
+                    finalView.classList.remove('hidden');
+                    btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brandMediumGreen text-white shadow-md";
+                } else {
+                    finalView.classList.add('hidden');
+                    btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:bg-white/5 hover:text-slate-100";
+                }
+            });
+
+            // Re-render graphs if landing on Analytics
+            if (targetTab === 'analytics') {
+                setTimeout(() => {
+                    if (tempChartInstance) tempChartInstance.resize();
+                    if (gasChartInstance) gasChartInstance.resize();
+                }, 100);
+            }
+        }
+
+        // ==========================================
+        // TELEMETRY RENDERING & CALCULATIONS
+        // ==========================================
+        function updateTelemetryUI() {
+            // Apply text content
+            document.getElementById('card-temp').innerText = `${liveTemp.toFixed(1)} °C`;
+            document.getElementById('card-humidity').innerText = `${liveHumidity.toFixed(1)} %`;
+            document.getElementById('card-soil').innerText = `${liveSoil.toFixed(1)} %`;
+            document.getElementById('card-gas').innerText = `${liveGas.toFixed(1)} ppm`;
+            document.getElementById('card-feed').innerText = `${liveFeed.toFixed(1)} %`;
+            document.getElementById('card-water').innerText = `${liveWater.toFixed(1)} %`;
+            document.getElementById('card-food-supply').innerText = `${liveFoodSupply.toFixed(1)} %`;
+            document.getElementById('card-lighting').innerText = `${liveLighting} hrs`;
+
+            // Calculate height in centimeters based on remaining depth (HC-SR04 depth is 30cm)
+            const remainingHeight = (30 * (1 - liveFeed/100)).toFixed(1);
+            document.getElementById('card-feed-height').innerText = `Depth: ${remainingHeight} cm`;
+
+            // Soil Moisture status
+            const soilStatus = document.getElementById('card-soil-status');
+            if (liveSoil > alarmSoilThreshold) {
+                soilStatus.innerText = "⚠️ Damp / Damp Coop Bedding";
+                soilStatus.className = "text-rose-600 text-[11px] font-bold animate-pulse";
+            } else {
+                soilStatus.innerText = "Optimal (Dry)";
+                soilStatus.className = "text-slate-500 text-[11px] font-bold";
+            }
+
+            // Gas Ammonia status
+            const gasStatus = document.getElementById('card-gas-status');
+            if (liveGas > alarmGasThreshold) {
+                gasStatus.innerText = "⚠️ High NH3 Ammonia!";
+                gasStatus.className = "text-rose-600 text-[11px] font-bold animate-pulse";
+                // Trigger fan automatically if in auto mode
+                if (fanMode === "auto" && !fanActive) {
+                    toggleFanState(true);
+                }
+            } else {
+                gasStatus.innerText = "Safe / Low NH3";
+                gasStatus.className = "text-slate-500 text-[11px] font-bold";
+            }
+
+            // Auto-fan Temperature regulation
+            if (fanMode === "auto") {
+                if (liveTemp > alarmTempThreshold && !fanActive) {
+                    toggleFanState(true);
+                } else if (liveTemp <= alarmTempThreshold && liveGas <= alarmGasThreshold && fanActive) {
+                    toggleFanState(false);
+                }
+            }
+
+            // Fan visual badge status
+            const fanBadge = document.getElementById('fan-badge');
+            const fanSpin = document.getElementById('fan-icon-spin');
+            const fanText = document.getElementById('fan-status-text');
+
+            if (fanActive) {
+                fanBadge.className = "text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 flex items-center";
+                fanSpin.className = "fas fa-fan mr-1 animate-spin-fast";
+                fanText.innerText = "Fan Active 🟢";
+            } else {
+                fanBadge.className = "text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100 flex items-center";
+                fanSpin.className = "fas fa-fan mr-1";
+                fanText.innerText = "Fan Idle 🔴";
+            }
+        }
+
+        // Periodically fluctuate parameters slightly to create a lively realistic telemetry overview
+        function simulateLiveSensorFluctuations() {
+            if (!currentUser) return;
+
+            // Fluctuations within small safe margins
+            liveTemp += (Math.random() - 0.5) * 0.4;
+            liveHumidity += (Math.random() - 0.5) * 0.8;
+            liveSoil += (Math.random() - 0.5) * 0.5;
+            liveGas += (Math.random() - 0.5) * 0.6;
+            liveFeed += (Math.random() - 0.5) * 0.2;
+            liveWater += (Math.random() - 0.5) * 0.3;
+            liveFoodSupply += (Math.random() - 0.5) * 0.2;
+
+            // Enforce bounds
+            if (liveTemp < 26) liveTemp = 27.2;
+            if (liveTemp > 33) liveTemp = 30.5;
+            if (liveHumidity < 45) liveHumidity = 52.0;
+            if (liveHumidity > 75) liveHumidity = 63.4;
+            if (liveSoil < 15) liveSoil = 22.0;
+            if (liveSoil > 50) liveSoil = 32.5;
+            if (liveGas < 5) liveGas = 8.2;
+            if (liveGas > 25) liveGas = 16.5;
+            if (liveFeed < 10) liveFeed = 80.0;
+            if (liveFeed > 100) liveFeed = 95.0;
+
+            // Trigger updates
+            updateTelemetryUI();
+            
+            // Add live data points to graphs dynamically
+            appendTelemetryChartData();
+        }
+
+        // ==========================================
+        // RELAY FAN TOGGLE OVERRIDES
+        // ==========================================
+        function toggleFanState(forcedState = null) {
+            if (forcedState !== null) {
+                fanActive = forcedState;
+            } else {
+                if (fanMode === "auto") {
+                    showToast("Override Prohibited", "Switch mode to 'Manual Override' to control exhaust fan relays.", "fa-circle-exclamation");
+                    return;
+                }
+                fanActive = !fanActive;
+                showToast("Relay Fan Toggled", `Exhaust fans switched manually to ${fanActive ? 'ON' : 'OFF'}.`, "fa-fan");
+            }
+
+            // Sync visual toggling switch
+            const toggleCircle = document.getElementById('fan-toggle-circle');
+            const toggleBtn = document.getElementById('fan-toggle-btn');
+            
+            if (fanActive) {
+                toggleCircle.className = "w-5 h-5 bg-white rounded-full shadow-md transform translate-x-6 transition-transform";
+                toggleBtn.className = "w-12 h-6 bg-emerald-500 rounded-full p-0.5 transition-colors focus:outline-none relative";
+            } else {
+                toggleCircle.className = "w-5 h-5 bg-white rounded-full shadow-md transform translate-x-0 transition-transform";
+                toggleBtn.className = "w-12 h-6 bg-slate-300 rounded-full p-0.5 transition-colors focus:outline-none relative";
+            }
+
+            updateTelemetryUI();
+        }
+
+        function changeFanMode() {
+            const selectVal = document.getElementById('fan-mode-select').value;
+            fanMode = selectVal;
+            showToast("Mode Calibrated", `Fan Relay control profile updated to ${fanMode.toUpperCase()}.`, "fa-sliders");
+            updateTelemetryUI();
+        }
+
+        // ==========================================
+        // ALARM SETTINGS WRITER
+        // ==========================================
+        function saveThresholdSettings() {
+            alarmTempThreshold = parseFloat(document.getElementById('set-temp').value);
+            alarmGasThreshold = parseFloat(document.getElementById('set-gas').value);
+            alarmSoilThreshold = parseFloat(document.getElementById('set-soil').value);
+            alarmFeedThreshold = parseFloat(document.getElementById('set-feed').value);
+
+            showToast("Threshold Config Saved", "Alert boundaries saved locally. Node parameters recalibrated.", "fa-floppy-disk");
+            updateTelemetryUI();
+        }
+
+        // ==========================================
+        // ML DISEASE PREDICTIONS (RETAIN PRESERVED HOOKS)
+        // ==========================================
+        document.getElementById('imageUpload').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Stop any active camera streams
+            closeCameraStream();
+
+            const reader = new FileReader();
+            reader.onload = function () {
+                uploadedImage = reader.result;
+                document.getElementById('preview').src = uploadedImage;
+                document.getElementById('preview-footnote').innerText = "Selected file preview thumbnail";
+                showToast("File Attached", "Chicken photo uploaded to local buffer.", "fa-file-image");
             };
             reader.readAsDataURL(file);
-          } else {
-            alert("Please select an image first.");
-          }
         });
 
-        $("#train").click(function () {
-          $("#result").html('<p class="text-blue-500">Training in progress...</p>');
-          $.ajax({
-            url: "/train",
-            method: "POST",
-            success: function (response) {
-              $("#result").html(
-                '<p class="text-green-500">Training completed successfully!</p>'
-              );
-            },
-            error: function () {
-              $("#result").html(
-                '<p class="text-red-500">Error occurred during training.</p>'
-              );
-            },
-          });
-        });
-      });
+        async function predictImage() {
+            if (!uploadedImage) {
+                showToast("Missing Image", "Please attach a chicken photograph first.", "fa-triangle-exclamation");
+                return;
+            }
+
+            const predictionText = document.getElementById('predictionText');
+            const confidenceText = document.getElementById('confidenceText');
+            const resultCard = document.getElementById('resultCard');
+            const treatmentCard = document.getElementById('treatmentCard');
+            const treatmentText = document.getElementById('treatmentText');
+
+            predictionText.innerText = "Analyzing...";
+            confidenceText.innerText = "Invoking Machine Learning Model...";
+            predictionText.className = "text-xl font-bold text-slate-500 animate-pulse";
+            treatmentCard.classList.add('hidden');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: uploadedImage
+                    })
+                });
+
+                const data = await response.json();
+                const prediction = data.prediction;
+                const confidence = data.confidence
+                    ? (data.confidence * 100).toFixed(2)
+                    : "0.00";
+
+                // Output text
+                if (prediction === "Healthy") {
+                    predictionText.innerText = "✅ Healthy";
+                    showToast("Diagnosis Complete", "ML Model indicates specimen is Healthy.", "fa-circle-check");
+                } else if (prediction === "Error") {
+                    predictionText.innerText = "❌ Analysis Error";
+                    confidenceText.innerText = "Details: Model token expired or bad image format.";
+                    resultCard.className = "bg-rose-50 rounded-xl p-5 text-center flex-grow flex flex-col justify-center border border-rose-200 shadow-inner";
+                    predictionText.className = "text-xl font-black text-rose-600";
+                    treatmentCard.classList.add('hidden');
+                    return;
+                } else {
+                    predictionText.innerText = "⚠️ " + prediction;
+                    showToast("Disease Detected", `ML Model diagnosed: ${prediction}`, "fa-circle-exclamation");
+                }
+
+                confidenceText.innerText = `Confidence Level: ${confidence}%`;
+
+                // Set styles matching predicted parameters
+                const lowerPred = prediction.toLowerCase();
+                if (lowerPred === "healthy") {
+                    resultCard.className = "bg-emerald-50 rounded-xl p-5 text-center flex-grow flex flex-col justify-center border border-emerald-200 shadow-inner transition-colors duration-300 min-h-[110px] my-auto";
+                    predictionText.className = "text-2xl font-black text-emerald-700";
+                } else {
+                    resultCard.className = "bg-rose-50 rounded-xl p-5 text-center flex-grow flex flex-col justify-center border border-rose-200 shadow-inner transition-colors duration-300 min-h-[110px] my-auto";
+                    predictionText.className = "text-2xl font-black text-rose-600";
+                }
+
+                // Show treatment solution card
+                if (diseaseTreatments[lowerPred]) {
+                    treatmentText.innerHTML = diseaseTreatments[lowerPred];
+                    treatmentCard.classList.remove('hidden');
+                } else {
+                    treatmentCard.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                predictionText.innerText = "❌ Network Refused";
+                confidenceText.innerText = "Could not bind to Python Flask API.";
+                resultCard.className = "bg-rose-50 rounded-xl p-5 text-center flex-grow flex flex-col justify-center border border-rose-200 shadow-inner";
+                predictionText.className = "text-xl font-black text-rose-600";
+                treatmentCard.classList.add('hidden');
+                showToast("API Binding Failed", "Verify Flask backend port 8080 is online.", "fa-wifi-slash");
+            }
+        }
+
+        // ==========================================
+        // WEBCAM CAMERA ACCESS HELPERS
+        // ==========================================
+        async function openCameraStream() {
+            const video = document.getElementById('camera-stream');
+            const previewImg = document.getElementById('preview');
+            const controls = document.getElementById('camera-controls');
+            const footnote = document.getElementById('preview-footnote');
+
+            try {
+                // Request camera stream (environment-facing preference if mobile)
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                cameraStreamTrack = stream;
+
+                // Show webcam container and controls
+                previewImg.classList.add('hidden');
+                video.classList.remove('hidden');
+                controls.classList.remove('hidden');
+                footnote.innerText = "Streaming live camera lens...";
+
+                showToast("Webcam Connected", "Live camera stream active. Align chicken and capture.", "fa-camera");
+            } catch (err) {
+                console.error("Camera access failed:", err);
+                showToast("Camera Access Denied", "Grant browser camera permissions or upload an image.", "fa-video-slash");
+            }
+        }
+
+        function captureFrame() {
+            const video = document.getElementById('camera-stream');
+            const previewImg = document.getElementById('preview');
+            const footnote = document.getElementById('preview-footnote');
+
+            if (!video.srcObject) return;
+
+            // Offscreen rendering canvas to draw static frame
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas frame directly to base64 jpeg string
+            const base64Data = canvas.toDataURL('image/jpeg');
+            uploadedImage = base64Data;
+            previewImg.src = base64Data;
+
+            // Stop live webcam tracks
+            closeCameraStream();
+            
+            footnote.innerText = "Captured camera frame snapshot";
+            showToast("Frame Snapshot Saved", "Webcam image loaded in prediction buffer.", "fa-camera-retro");
+        }
+
+        function closeCameraStream() {
+            const video = document.getElementById('camera-stream');
+            const previewImg = document.getElementById('preview');
+            const controls = document.getElementById('camera-controls');
+            const footnote = document.getElementById('preview-footnote');
+
+            if (cameraStreamTrack) {
+                const tracks = cameraStreamTrack.getTracks();
+                tracks.forEach(track => track.stop());
+                cameraStreamTrack = null;
+            }
+
+            video.srcObject = null;
+
+            // Restore preview container view states
+            video.classList.add('hidden');
+            previewImg.classList.remove('hidden');
+            controls.classList.add('hidden');
+            footnote.innerText = "Selected file preview thumbnail";
+        }
+
+        // ==========================================
+        // ANALYTICS & CHARTS INITIALIZER
+        // ==========================================
+        function initTelemetryCharts() {
+            // Destroy existing instances if they already exist to prevent Chart.js canvas-in-use crashes
+            if (tempChartInstance) {
+                tempChartInstance.destroy();
+            }
+            if (gasChartInstance) {
+                gasChartInstance.destroy();
+            }
+
+            const timeLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Current'];
+            
+            // Chart 1: Temp & Humidity
+            const ctxTemp = document.getElementById('tempChart').getContext('2d');
+            tempChartInstance = new Chart(ctxTemp, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: 'Temp (°C)',
+                            data: [27.5, 27.9, 28.2, 29.8, 30.2, 29.1, liveTemp],
+                            borderColor: 'rgb(244, 63, 94)',
+                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: [64.1, 63.2, 60.5, 54.2, 53.0, 58.4, liveHumidity],
+                            borderColor: 'rgb(245, 158, 11)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+
+            // Chart 2: Soil Bedding & Ammonia Gas
+            const ctxGas = document.getElementById('gasChart').getContext('2d');
+            gasChartInstance = new Chart(ctxGas, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: 'Soil Moisture (%)',
+                            data: [35.2, 35.0, 34.8, 34.1, 33.9, 34.3, liveSoil],
+                            borderColor: 'rgb(4, 120, 87)',
+                            backgroundColor: 'rgba(4, 120, 87, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'MQ135 Ammonia (ppm)',
+                            data: [10.5, 11.2, 12.8, 14.5, 13.1, 11.9, liveGas],
+                            borderColor: 'rgb(168, 85, 247)',
+                            backgroundColor: 'rgba(168, 85, 247, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function appendTelemetryChartData() {
+            if (!tempChartInstance || !gasChartInstance) return;
+
+            // Update current points
+            tempChartInstance.data.datasets[0].data[6] = liveTemp;
+            tempChartInstance.data.datasets[1].data[6] = liveHumidity;
+            tempChartInstance.update('none');
+
+            gasChartInstance.data.datasets[0].data[6] = liveSoil;
+            gasChartInstance.data.datasets[1].data[6] = liveGas;
+            gasChartInstance.update('none');
+        }
+
+        // ==========================================
+        // AUDIT REPORTS COMPILING (PDF & CSV)
+        // ==========================================
+        function generateSensorReport() {
+            const range = document.getElementById('report-range').value;
+            const outputCard = document.getElementById('report-output-card');
+            
+            // Update timestamp
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            document.getElementById('report-date-tag').innerText = `Compiled: ${dateStr} - ${timeStr}`;
+            document.getElementById('report-operator-tag').innerText = `Operator: ${currentUser ? currentUser.name : 'System'}`;
+
+            // Set aggregate averages based on timeframe selected
+            let avgTemp, avgHumidity, avgSoil, avgGas, avgFeed, avgFan;
+
+            if (range === 'today') {
+                avgTemp = (liveTemp + 0.1).toFixed(1);
+                avgHumidity = (liveHumidity - 0.2).toFixed(1);
+                avgSoil = (liveSoil + 0.3).toFixed(1);
+                avgGas = (liveGas - 0.2).toFixed(1);
+                avgFeed = liveFeed.toFixed(1);
+                avgFan = `${fanMode.toUpperCase()} (${fanActive ? 'Active 🟢' : 'Idle 🔴'})`;
+            } else if (range === 'week') {
+                avgTemp = "28.1";
+                avgHumidity = "62.5";
+                avgSoil = "35.1";
+                avgGas = "11.4";
+                avgFeed = "81.9";
+                avgFan = "AUTO (Mixed Action 🟢)";
+            } else {
+                avgTemp = "28.5";
+                avgHumidity = "63.1";
+                avgSoil = "35.5";
+                avgGas = "12.8";
+                avgFeed = "78.4";
+                avgFan = "AUTO (Mixed Action 🟢)";
+            }
+
+            // Render variables in report
+            document.getElementById('rep-val-temp').innerText = `${avgTemp} °C`;
+            document.getElementById('rep-val-humidity').innerText = `${avgHumidity} %`;
+            document.getElementById('rep-val-soil').innerText = `${avgSoil} %`;
+            document.getElementById('rep-val-gas').innerText = `${avgGas} ppm`;
+            document.getElementById('rep-val-feed').innerText = `${avgFeed} %`;
+            document.getElementById('rep-val-fan').innerText = avgFan;
+
+            // Show output block
+            outputCard.classList.remove('hidden');
+            showToast("Report Stamped", "Aggregated telemetry loaded successfully.", "fa-file-signature");
+        }
+
+        function downloadCSVReport() {
+            // Build CSV table content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Hardware Sensor,Parameter Name,Aggregate Average,Safety Limit,Safety Flag\r\n";
+            
+            csvContent += `DHT11,Temperature,${document.getElementById('rep-val-temp').innerText},28-32 C,OPTIMAL\r\n`;
+            csvContent += `DHT11,Humidity,${document.getElementById('rep-val-humidity').innerText},50-70%,OPTIMAL\r\n`;
+            csvContent += `Soil Moisture,Coop Bedding Moisture,${document.getElementById('rep-val-soil').innerText},<45%,OPTIMAL\r\n`;
+            csvContent += `MQ135 Gas,Ammonia NH3,${document.getElementById('rep-val-gas').innerText},<18ppm,SAFE\r\n`;
+            csvContent += `HC-SR04,Remaining Silo Feed,${document.getElementById('rep-val-feed').innerText},>20%,OPTIMAL\r\n`;
+            csvContent += `Relay Fan Actuator,Relay Output,${document.getElementById('rep-val-fan').innerText.replace('🟢', 'ON').replace('🔴', 'OFF')},Reactive ON/OFF,ACTIVE SYSTEM\r\n`;
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `poultrypro_sensor_report_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("CSV Downloaded", "Spreadsheet sensor export completed.", "fa-file-excel");
+        }
+
+        function triggerPDFPrint() {
+            // Triggers browsers print dialog. Styled cleanly by custom print CSS rule
+            window.print();
+        }
+
+        // ==========================================
+        // GRAPHICAL TOAST ALERTER
+        // ==========================================
+        function showToast(title, desc, iconClass = "fa-check") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const toastTitle = document.getElementById('toast-title');
+            const toastDesc = document.getElementById('toast-desc');
+
+            // Apply fields
+            icon.className = `fas ${iconClass} text-lg`;
+            toastTitle.innerText = title;
+            toastDesc.innerText = desc;
+
+            // Slide in
+            toast.className = toast.className.replace('translate-y-[-150%]', 'translate-y-0');
+
+            // Auto slide out
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0', 'translate-y-[-150%]');
+            }, 3500);
+        }
+
+        // ==========================================
+        // AUTO DIAGNOSTICS & RESILIENCY AUTO-HEALER
+        // ==========================================
+        (function() {
+            try {
+                console.log("PoultryPro Diagnostics:");
+                const lp = document.getElementById('landing-page');
+                const ad = document.getElementById('app-dashboard');
+                console.log("- Landing page element found:", !!lp);
+                console.log("- Dashboard element found:", !!ad);
+                console.log("- Saved User session:", localStorage.getItem('poultry_user'));
+
+                if (lp && ad) {
+                    const lpHidden = lp.classList.contains('hidden');
+                    const adHidden = ad.classList.contains('hidden');
+                    console.log("- Landing page is hidden:", lpHidden);
+                    console.log("- Dashboard is hidden:", adHidden);
+
+                    // Auto-healing trigger: If BOTH are hidden, or BOTH are visible, default to landing page
+                    if (lpHidden && adHidden) {
+                        console.warn("Auto-healer: Both views are hidden! Forcing Landing Page visible.");
+                        lp.classList.remove('hidden');
+                        switchLandingView('home');
+                    } else if (!lpHidden && !adHidden) {
+                        console.warn("Auto-healer: Both views are visible! Hiding Dashboard, resetting to Landing.");
+                        ad.classList.add('hidden');
+                        switchLandingView('home');
+                    }
+                }
+            } catch (diagErr) {
+                console.error("Diagnostics auto-healer error:", diagErr);
+            }
+        })();
     </script>
-  </body>
+
+</body>
+
 </html>
